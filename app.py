@@ -22,20 +22,25 @@ if not hasattr(cgi, 'parse_header'):
         return email.utils.decode_params('; ' + line)[0]
     cgi.parse_header = parse_header
 
-# --- CONFIGURACIÓN BETA | CREATOR EDITION ---
-# Agregamos '?v=2' al final para forzar la actualización en celulares
-LOGO_URL = "https://i.postimg.cc/8cm7936M/logo-creator-final.png?v=2"
+# --- CONFIGURACIÓN ---
+import os
+
+# Verificamos si el archivo existe para evitar errores
+LOGO_PATH = "logo_beta.png" if os.path.exists("logo_beta.png") else None
 
 st.set_page_config(
-    page_title="Traductor IA | Creator Edition Beta",
-    page_icon=LOGO_URL,
+    page_title="Traductor Creator Edition Beta",
+    page_icon=LOGO_PATH,
     layout="centered"
 )
 
 with st.sidebar:
-    # Mostramos tu logo personalizado
-    st.image(LOGO_URL, use_container_width=True)
+    if LOGO_PATH:
+        st.image(LOGO_PATH, use_container_width=True)
+    st.info("🚀 **Versión Beta v0.5**")
+        
     st.markdown("<h3 style='text-align: center;'>Configuración</h3>", unsafe_allow_html=True)
+    # ... resto del código
     
     api_key = st.text_input("OpenAI API Key:", type="password")
     motor = st.selectbox("Motor:", ["Google (Gratis)", "ChatGPT (Premium)"])
