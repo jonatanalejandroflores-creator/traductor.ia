@@ -60,27 +60,6 @@ st.divider()
 dest_lang = st.selectbox("Idioma destino:", ["Spanish", "English", "French", "German"])
 lang_codes = {"Spanish": "es", "English": "en", "French": "fr", "German": "de"}
 
-if st.button("TRADUCIR AHORA ✨"):
-    if texto_para_traducir:
-        try:
-            with st.spinner("Traduciendo..."):
-                if motor == "ChatGPT (Premium)" and api_key:
-                    client = openai.OpenAI(api_key=api_key)
-                    response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        messages=[{"role": "user", "content": f"Traduce al {dest_lang}: {texto_para_traducir}"}]
-                    )
-                    resultado = response.choices[0].message.content
-                else:
-                    translator = Translator()
-                    res = translator.translate(texto_para_traducir, dest=lang_codes[dest_lang])
-                    resultado = res.text
-
-                st.success(f"**Resultado:** {resultado}")
-                tts = gTTS(text=resultado, lang=lang_codes[dest_lang])
-                fp = io.BytesIO()
-                tts.write_to_fp(fp)
-                fp.seek(0)
-                st.audio(fp)
-        except Exception as e:
-            st.error(f"Error: {e}")
+git add app.py
+git commit -m "fix: corregir error de desempaquetado de valores"
+git push origin rama-arreglo-v1.0:main --force
