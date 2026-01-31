@@ -23,8 +23,8 @@ if not hasattr(cgi, 'parse_header'):
     cgi.parse_header = parse_header
 
 # --- CONFIGURACIÓN BETA | CREATOR EDITION ---
-# Esta URL es permanente y no fallará
-LOGO_URL = "https://i.postimg.cc/8cm7936M/logo-creator-final.png"
+# Agregamos '?v=2' al final para forzar la actualización en celulares
+LOGO_URL = "https://i.postimg.cc/8cm7936M/logo-creator-final.png?v=2"
 
 st.set_page_config(
     page_title="Traductor IA | Creator Edition Beta",
