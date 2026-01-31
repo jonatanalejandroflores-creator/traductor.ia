@@ -3,7 +3,7 @@ import sys
 import io
 from types import ModuleType
 
-# --- 1. PARCHE DE COMPATIBILIDAD (Para que no vuelva el error CGI) ---
+# --- 1. PARCHE CGI ---
 try:
     import cgi
 except ImportError:
@@ -33,12 +33,12 @@ with st.sidebar:
     api_key = st.text_input("OpenAI API Key:", type="password")
     motor = st.selectbox("Motor:", ["Google (Gratis)", "ChatGPT (Premium)"])
 
-# --- 4. INTERFAZ (TABS) ---
+# --- 4. INTERFAZ ---
 tab1, tab2, tab3 = st.tabs(["⌨️ Texto/Canción", "🎤 Voz", "📸 Imagen (OCR)"])
 texto_para_traducir = ""
 
 with tab1:
-    texto_manual = st.text_area("Escribe o pega aquí:", height=200)
+    texto_manual = st.text_area("Escribe o pega aquí:", height=200, key="manual")
     if texto_manual:
         texto_para_traducir = texto_manual
 
@@ -54,49 +54,43 @@ with tab3:
     if archivo_imagen:
         img = Image.open(archivo_imagen)
         st.image(img, caption="Imagen cargada", use_container_width=True)
-        # Extraer texto de la imagen (OCR)
-        texto_para_traducir = pytesseract.image_to_string(img)
-        st.text_area("Texto detectado:", value=texto_para_traducir)
+        # Extraemos el texto y lo guardamos
+        texto_detectado = pytesseract.image_to_string(img)
+        st.text_area("Texto detectado:", value=texto_detectado, height=150)
+        texto_para_traducir = texto_detectado
 
-# --- 5. TU BLOQUE DE TRADUCCIÓN (EL QUE ARREGLASTE) ---
+# --- 5. LÓGICA DE TRADUCCIÓN SIN ERRORES ---
 st.divider()
 dest_lang = st.selectbox("Idioma destino:", ["Spanish", "English", "French", "German"])
 lang_codes = {"Spanish": "es", "English": "en", "French": "fr", "German": "de"}
 
 if st.button("TRADUCIR AHORA ✨"):
-    # .strip() asegura que no enviemos texto vacío al traductor
-    texto_limpio = texto_para_traducir.strip()
-    
-    if texto_limpio:
+    if texto_para_traducir and texto_para_traducir.strip():
         try:
             with st.spinner("Traduciendo..."):
                 if motor == "ChatGPT (Premium)" and api_key:
                     client = openai.OpenAI(api_key=api_key)
                     response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
-                        messages=[{"role": "user", "content": f"Traduce al {dest_lang}: {texto_limpio}"}]
+                        messages=[{"role": "user", "content": f"Traduce al {dest_lang}: {texto_para_traducir}"}]
                     )
                     resultado_final = response.choices[0].message.content
                 else:
-                    # USAR ESTA FORMA PARA EVITAR EL ERROR DE 'UNPACK'
+                    # Motor de Google blindado
                     translator = Translator()
-                    # Solo pedimos la traducción al idioma destino
-                    traduccion_objeto = translator.translate(texto_limpio, dest=lang_codes[dest_lang])
-                    resultado_final = traduccion_objeto.text
+                    # No usamos desempaquetado con comas aquí
+                    traduccion = translator.translate(texto_para_traducir, dest=lang_codes[dest_lang])
+                    resultado_final = traduccion.text
 
-                # --- MOSTRAR RESULTADO ---
-                st.success("**Traducción:**")
+                st.success("**Resultado:**")
                 st.write(resultado_final)
                 
-                # Generar el audio
                 tts = gTTS(text=resultado_final, lang=lang_codes[dest_lang])
                 fp = io.BytesIO()
                 tts.write_to_fp(fp)
                 fp.seek(0)
                 st.audio(fp)
-
         except Exception as e:
-            # Esto atrapará el error y te dirá exactamente qué pasó sin romper la app
-            st.error(f"Hubo un problema técnico: {e}")
+            st.error(f"Error técnico: {e}")
     else:
-        st.warning("⚠️ Primero detecta o escribe algún texto para traducir.")
+        st.warning("⚠️ No hay texto para traducir. Escribe algo o sube una imagen.")
