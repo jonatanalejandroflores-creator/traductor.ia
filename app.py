@@ -79,7 +79,7 @@ if st.button("TRADUCIR AHORA ✨"):
                     gt = Translator()
                     # Realizamos la traducción y guardamos el objeto completo
                     obj_traduccion = gt.translate(texto_para_traducir, dest=lang_codes[dest_lang])
-                    # Extraemos solo el texto del objeto
+                    # IMPORTANTE: Debe ser .text (con la 't' al final)
                     resultado_final = obj_traduccion.text
 
                 # Mostrar resultado
