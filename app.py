@@ -22,14 +22,33 @@ if not hasattr(cgi, 'parse_header'):
         return email.utils.decode_params('; ' + line)[0]
     cgi.parse_header = parse_header
 
-# --- CONFIGURACIÓN ---
-st.set_page_config(page_title="Traductor Pro IA", page_icon="🌐")
-st.title("🌐 Traductor Pro Multi-Modo")
+# --- CONFIGURACIÓN BETA | CREATOR EDITION ---
+# Usamos un enlace directo al logo para que no tengas que subir el archivo aún
+LOGO_URL = "https://i.ibb.co/vzNfVvM/logo-creator.png"
+
+st.set_page_config(
+    page_title="Traductor IA | Creator Edition Beta",
+    page_icon=LOGO_URL,
+    layout="centered"
+)
 
 with st.sidebar:
-    st.header("Configuración")
+    # Logo 3D en la parte superior
+    st.image(LOGO_URL, use_container_width=True)
+    
+    st.markdown("<h3 style='text-align: center;'>Configuración</h3>", unsafe_allow_html=True)
+    
     api_key = st.text_input("OpenAI API Key:", type="password")
     motor = st.selectbox("Motor:", ["Google (Gratis)", "ChatGPT (Premium)"])
+    
+    st.divider()
+    st.info("🚀 **Versión Beta v0.5**")
+    st.caption("👤 **Creator Edition**")
+    st.caption("Desarrollado por Jonatan Alejandro Flores")
+
+# Título con estilo Beta
+st.title("🌐 Traductor Pro Multi-Modo")
+st.write("---")
 
 tab1, tab2, tab3 = st.tabs(["⌨️ Texto", "🎤 Voz", "📸 Imagen"])
 texto_para_traducir = ""
