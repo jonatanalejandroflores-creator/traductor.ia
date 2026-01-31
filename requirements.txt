@@ -1,2 +1,7 @@
 streamlit
+Pillow
+pytesseract
+openai
 googletrans==4.0.0-rc1
+gTTS
+streamlit-mic-recorder
