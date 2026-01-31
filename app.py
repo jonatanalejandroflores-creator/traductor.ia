@@ -2,7 +2,11 @@ import streamlit as st
 from googletrans import Translator
 
 # Configuración de la página
-st.set_page_config(page_title="Music Translator Demo", page_icon="🎵")
+st.set_page_config(
+    page_title="Traductor Pro IA",
+    page_icon="🌐", # Usamos un emoji en lugar de un archivo
+    layout="centered"
+)
 
 st.title("🎵 Traductor de Canciones AI")
 st.markdown("Identifica el idioma automáticamente y traduce al español.")
