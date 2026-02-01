@@ -1,0 +1,16 @@
+{
+  "short_name": "TraductorCE",
+  "name": "Traductor Creator Edition",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/jonatanalejandroflores-creator/main/logo_beta.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#00FFAA",
+  "background_color": "#0E1117"
+}

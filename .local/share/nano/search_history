@@ -18,4 +18,5 @@ chmod prueba.sh
 ./mi_programa
 ./traductor.oy
 ./traductor.py
+./manifest.json
 

@@ -36,7 +36,11 @@ st.set_page_config(
 
 with st.sidebar:
     if LOGO_PATH:
-        st.image(LOGO_PATH, use_container_width=True)
+        try:
+            st.image(LOGO_PATH, width=150)
+        except Exception:
+            st.write("🌐 **Traductor Creator Edition**") # Texto si la imagen falla
+    
     st.info("🚀 **Versión Beta v0.5**")
         
     st.markdown("<h3 style='text-align: center;'>Configuración</h3>", unsafe_allow_html=True)

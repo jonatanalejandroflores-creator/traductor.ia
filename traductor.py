@@ -33,10 +33,16 @@ st.set_page_config(
     page_icon=LOGO_PATH,
     layout="centered"
 )
-
+# Inyectar el manifest para que sea una PWA
+st.markdown(
+    """
+    <link rel="manifest" href="https://raw.githubusercontent.com/jonatanalejandroflores-creator/traductor.ia/main/manifest.json">
+    """,
+    unsafe_allow_html=True
+)
 # --- FORZAR ICONO EN MÓVILES (Fuera del sidebar para mejor carga) ---
 st.markdown(
-    f"""
+    """
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/jonatanalejandroflores-creator/traductor.ia/main/logo_beta.png">
     <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/jonatanalejandroflores-creator/traductor.ia/main/logo_beta.png">
     """, 
