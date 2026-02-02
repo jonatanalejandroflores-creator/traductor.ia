@@ -3,96 +3,76 @@ import streamlit as st
 import openai
 from googletrans import Translator
 
-# --- 1. SEGURIDAD ---
-api_key = os.getenv("OPENAI_API_KEY")
+# --- CONFIGURACIÓN DE SEGURIDAD ---
+api_key_env = os.getenv("OPENAI_API_KEY")
 
-# --- 2. CONFIGURACIÓN DE PANTALLA ---
-st.set_page_config(page_title="AI Trans Pro", page_icon="🌐", layout="centered")
+st.set_page_config(page_title="Traductor Pro", page_icon="🌐")
 
+# --- BARRA LATERAL LIMPIA ---
 with st.sidebar:
-    # Logo y versión (Limpiamos la redundancia aquí)
-    st.image("logo_beta.png", width=150) if os.path.exists("logo_beta.png") else st.title("🌐 AI Trans")
-    st.info("🚀 **Versión Beta v0.5.5**")
+    st.image("https://cdn-icons-png.flaticon.com/512/3858/3858902.png", width=100)
+    st.title("Configuración")
+    st.info("🚀 **Versión Beta v0.6**")
     
-    # Lógica de detección de llave
-    if api_key and "sk-tu-clave" not in api_key:
+    # Solo pedimos la clave si la de la nube no es válida
+    if api_key_env and api_key_env.startswith("sk-"):
         st.success("✅ IA Conectada")
-        openai.api_key = api_key
+        api_key = api_key_env
     else:
-        st.warning("⚠️ Configura tu API Key Real en Secrets")
-        api_key = st.text_input("O introduce Key manualmente:", type="password")
-        openai.api_key = api_key
-
+        api_key = st.text_input("Introduce OpenAI API Key:", type="password")
+    
+    openai.api_key = api_key
+    motor = st.selectbox("Motor:", ["Google (Gratis)", "OpenAI (GPT-4)"])
     st.markdown("---")
-    motor = st.selectbox("Motor de traducción:", ["Google (Gratis)", "OpenAI (GPT-4)"])
+    st.caption("Desarrollado por Jonatan Alejandro Flores")
 
-# --- 3. CUERPO PRINCIPAL ---
+# --- CUERPO PRINCIPAL ---
 st.title("🌐 Traductor Pro Multi-Modo")
 
-# Usamos st.session_state para que el texto no se borre al cambiar de pestaña
-if "texto_a_traducir" not in st.session_state:
-    st.session_state.texto_a_traducir = ""
+if "texto_voz" not in st.session_state:
+    st.session_state.texto_voz = ""
 
 tab1, tab2, tab3 = st.tabs(["⌨️ Texto", "🎤 Voz", "📸 Imagen"])
 
 with tab1:
-    # El área de texto ahora está conectada a la memoria de la app
-    texto_usuario = st.text_area("Escribe o revisa el audio:", 
-                                value=st.session_state.texto_a_traducir, 
-                                height=150)
+    texto_input = st.text_area("Escribe aquí:", value=st.session_state.texto_voz, height=150)
 
 with tab2:
-    st.write("### 🎙️ Grabadora de Voz")
-    audio_file = st.audio_input("Haz clic para hablar") # El componente de tu captura
+    st.write("### Graba tu mensaje")
+    audio_data = st.audio_input("Escuchando...")
     
-    if audio_file:
-        if st.button("Transcribir Voz 🤖"):
-            if not api_key or "sk-" not in api_key:
-                st.error("Se requiere una API Key real para procesar audio.")
-            else:
-                try:
-                    with st.spinner("Whisper está escuchando..."):
-                        # Guardar temporalmente el audio
-                        with open("temp.wav", "wb") as f:
-                            f.write(audio_file.read())
-                        
-                        # Transcripción oficial de OpenAI
-                        with open("temp.wav", "rb") as audio:
-                            transcripcion = openai.audio.transcriptions.create(
-                                model="whisper-1", 
-                                file=audio
-                            )
-                        
-                        # Guardamos el resultado en la memoria
-                        st.session_state.texto_a_traducir = transcripcion.text
-                        st.success(f"Texto detectado: {transcripcion.text}")
-                        st.rerun() # Refresca para mostrar el texto en la Tab 1
-                except Exception as e:
-                    st.error(f"Error procesando audio: {e}")
+    if audio_data and st.button("Convertir Voz a Texto 🤖"):
+        try:
+            with st.spinner("Procesando audio..."):
+                # Solución al error de archivos: Usamos un nombre fijo
+                with open("audio_temp.wav", "wb") as f:
+                    f.write(audio_data.read())
+                
+                with open("audio_temp.wav", "rb") as f:
+                    transcript = openai.audio.transcriptions.create(model="whisper-1", file=f)
+                
+                st.session_state.texto_voz = transcript.text
+                st.success(f"Detectado: {transcript.text}")
+                st.rerun()
+        except Exception as e:
+            st.error("Para usar voz necesitas una clave real de OpenAI (sk-...)")
 
-with tab3:
-    st.info("📸 Visión Artificial: Próximamente.")
-
-# --- 4. ACCIÓN FINAL ---
-idioma_dest = st.selectbox("Idioma destino:", ["Spanish", "English", "French", "German"])
+# --- LÓGICA DE TRADUCCIÓN ---
+idioma = st.selectbox("Destino:", ["Spanish", "English", "French", "German"])
 
 if st.button("TRADUCIR AHORA ✨"):
-    # Prioriza el texto que el usuario editó o el que vino de la voz
-    final_text = texto_usuario if texto_usuario else st.session_state.texto_a_traducir
-    
-    if not final_text:
-        st.warning("Escribe algo o graba un audio primero.")
+    if not texto_input:
+        st.warning("Escribe algo primero.")
     else:
-        with st.spinner('Traduciendo...'):
-            try:
-                if motor == "Google (Gratis)":
-                    res = Translator().translate(final_text, dest=idioma_dest[:2].lower()).text
-                else:
-                    response = openai.chat.completions.create(
-                        model="gpt-4",
-                        messages=[{"role": "user", "content": f"Translate to {idioma_dest}: {final_text}"}]
-                    )
-                    res = response.choices[0].message.content
-                st.success(f"### Resultado:\n{res}")
-            except Exception as e:
-                st.error(f"Error en traducción: {e}")
+        try:
+            if motor == "Google (Gratis)":
+                res = Translator().translate(texto_input, dest=idioma[:2].lower()).text
+                st.success(res)
+            else:
+                response = openai.chat.completions.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": f"Translate to {idioma}: {texto_input}"}]
+                )
+                st.success(response.choices[0].message.content)
+        except Exception as e:
+            st.error(f"Error: {e}")
