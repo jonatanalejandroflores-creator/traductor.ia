@@ -3,76 +3,95 @@ import streamlit as st
 import openai
 from googletrans import Translator
 
-# --- 1. CONFIGURACIÓN DE SEGURIDAD (DEVOPS) ---
+# --- 1. CONFIGURACIÓN DE SEGURIDAD ---
+# Intenta obtener la clave del sistema
 api_key = os.getenv("OPENAI_API_KEY")
 
-# --- 2. CONFIGURACIÓN DE PANTALLA ---
+# --- 2. INTERFAZ Y ESTILO ---
 st.set_page_config(page_title="AI Trans Pro", page_icon="🌐", layout="centered")
 
-# Inyectar Manifest para PWA
+# Inyectar el manifest para PWA
 st.markdown('<link rel="manifest" href="/manifest.json">', unsafe_allow_html=True)
 
-# --- 3. BARRA LATERAL (LIMPIA) ---
 with st.sidebar:
-    # Logo y Versión (Solo una vez)
     st.image("logo_beta.png", width=150) if os.path.exists("logo_beta.png") else st.title("🌐 AI Trans")
-    st.info("🚀 **Versión Beta v0.5**")
+    st.info("🚀 **Versión Beta v0.5.2**")
     
-    st.markdown("### Configuración")
-    
-    # Lógica de Seguridad Inteligente
-    if api_key:
-        st.success("✅ Conectado a OpenAI")
+    # Si la clave en Secrets es válida (no es la de ejemplo), ocultamos el input
+    if api_key and "sk-tu-clave" not in api_key:
+        st.success("✅ Sistema: Conectado")
         openai.api_key = api_key
     else:
-        api_key = st.text_input("OpenAI API Key:", type="password", help="Introduce tu clave para activar GPT-4")
+        st.warning("⚠️ Configura tu API Key Real")
+        api_key = st.text_input("OpenAI API Key:", type="password", help="Pega tu clave sk-...")
         openai.api_key = api_key
 
-    motor = st.selectbox("Motor:", ["Google (Gratis)", "OpenAI (GPT-4)"])
     st.markdown("---")
-    st.caption("👤 Creator Edition")
-    st.caption("Desarrollado por Jonatan Alejandro Flores")
+    motor = st.selectbox("Motor de traducción:", ["Google (Gratis)", "OpenAI (GPT-4)"])
+    idioma_dest = st.selectbox("Idioma destino:", ["Spanish", "English", "French", "German", "Italian"])
 
-# --- 4. CUERPO PRINCIPAL ---
+# --- 3. CUERPO DE LA APP ---
 st.title("🌐 Traductor Pro Multi-Modo")
 
 tab1, tab2, tab3 = st.tabs(["⌨️ Texto", "🎤 Voz", "📸 Imagen"])
 
 with tab1:
-    texto_usuario = st.text_area("Escribe aquí:", height=150)
+    # Usamos session_state para que el texto de voz aparezca aquí automáticamente
+    if "input_text" not in st.session_state:
+        st.session_state.input_text = ""
+    
+    texto_usuario = st.text_area("Escribe aquí:", value=st.session_state.input_text, height=150)
 
 with tab2:
-    st.info("Función de voz detectada. El audio capturado se procesará aquí.")
-    # Aquí puedes añadir: audio_file = st.file_uploader("Subir audio", type=["mp3", "wav"])
+    st.write("### Asistente de Voz")
+    audio_data = st.audio_input("Graba tu mensaje")
+    
+    if audio_data:
+        if st.button("Transcibir Audio 🔊"):
+            if not api_key or "sk-" not in api_key:
+                st.error("Se requiere una API Key real para procesar voz.")
+            else:
+                try:
+                    with st.spinner("Whisper está escuchando..."):
+                        # Guardar temporalmente
+                        with open("temp.wav", "wb") as f:
+                            f.write(audio_data.read())
+                        
+                        # Transcripción con OpenAI
+                        with open("temp.wav", "rb") as f:
+                            transcript = openai.audio.transcriptions.create(model="whisper-1", file=f)
+                        
+                        st.session_state.input_text = transcript.text
+                        st.success(f"Texto detectado: {transcript.text}")
+                        st.info("Vuelve a la pestaña 'Texto' para traducir.")
+                except Exception as e:
+                    st.error(f"Error de voz: {e}")
 
 with tab3:
-    st.info("Sube una imagen o captura para traducir texto visual.")
-    # Aquí puedes añadir: image_file = st.file_uploader("Subir imagen", type=["jpg", "png"])
+    st.info("Módulo de Visión Artificial: Próximamente.")
 
-idioma_dest = st.selectbox("Idioma destino:", ["Spanish", "English", "French", "German"])
-
-# --- 5. ACCIÓN DE TRADUCCIÓN ---
+# --- 4. ACCIÓN DE TRADUCCIÓN ---
 if st.button("TRADUCIR AHORA ✨"):
-    if not texto_usuario:
-        st.warning("⚠️ Escribe algo para traducir.")
+    texto_final = st.session_state.input_text if not texto_usuario else texto_usuario
+    if not texto_final:
+        st.warning("Escribe o graba algo primero.")
     else:
         try:
             with st.spinner('Traduciendo...'):
                 if motor == "Google (Gratis)":
-                    ts = Translator()
-                    resultado = ts.translate(texto_usuario, dest=idioma_dest[:2].lower()).text
+                    translator = Translator()
+                    resultado = translator.translate(texto_final, dest=idioma_dest[:2].lower()).text
                 else:
-                    if not api_key:
-                        st.error("❌ Necesitas una API Key para usar OpenAI.")
-                        st.stop()
-                    # Llamada a la API de OpenAI (Nueva Sintaxis)
                     response = openai.chat.completions.create(
                         model="gpt-4",
-                        messages=[{"role": "user", "content": f"Translate to {idioma_dest}: {texto_usuario}"}]
+                        messages=[{"role": "user", "content": f"Translate to {idioma_dest}: {texto_final}"}]
                     )
                     resultado = response.choices[0].message.content
-
+                
                 st.success("### Resultado:")
                 st.write(resultado)
         except Exception as e:
-            st.error(f"Error técnico: {e}")
+            st.error(f"Error en traducción: {e}")
+
+st.markdown("---")
+st.caption("Desarrollado por Jonatan Alejandro Flores | Creator Edition")
